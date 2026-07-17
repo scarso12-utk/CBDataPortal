@@ -173,7 +173,7 @@ with control_column:
             start_time = st.time_input(
                 "Start Time",
                 value=data_start_datetime.time().replace(microsecond=0),
-                step=1,
+                step=60,
                 disabled=use_data_start,
                 key="graph_start_time",
             )
@@ -193,7 +193,7 @@ with control_column:
             end_time = st.time_input(
                 "End Time",
                 value=data_end_datetime.time().replace(microsecond=0),
-                step=1,
+                step=60,
                 disabled=use_data_end,
                 key="graph_end_time",
             )
