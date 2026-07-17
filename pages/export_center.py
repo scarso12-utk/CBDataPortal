@@ -164,7 +164,7 @@ with selection_column:
             start_time = st.time_input(
                 "Start Time",
                 value=data_start_datetime.time().replace(microsecond=0),
-                step=1,
+                step=60,
                 disabled=use_data_start,
                 key="export_start_time",
             )
@@ -184,7 +184,7 @@ with selection_column:
             end_time = st.time_input(
                 "End Time",
                 value=data_end_datetime.time().replace(microsecond=0),
-                step=1,
+                step=60,
                 disabled=use_data_end,
                 key="export_end_time",
             )
