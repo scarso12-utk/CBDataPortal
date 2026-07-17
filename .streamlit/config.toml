@@ -1,1 +1,30 @@
+# =============================================================================
+# STREAMLIT THEME
+# Most visual settings are controlled near the top of app.py. These baseline
+# values keep Streamlit's built-in widgets consistent during startup.
+# =============================================================================
+[theme]
+primaryColor = "#87CEEB"
+backgroundColor = "#B0C4DE"
+secondaryBackgroundColor = "#FFFDD0"
+textColor = "#000000"
+font = "sans-serif"
+
+# =============================================================================
+# SERVER SETTINGS
+# =============================================================================
+[server]
+headless = true
+runOnSave = true
+
+# =============================================================================
+# BROWSER AND CLIENT SETTINGS
+# =============================================================================
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = "none"
+
 
