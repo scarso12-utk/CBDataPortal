@@ -152,7 +152,7 @@ with selection_column:
             st.markdown("#### Start Time")
             use_data_start = st.checkbox(
                 "Use start of data",
-                value=True,
+                value=False,
                 key="export_use_data_start",
             )
             start_date = st.date_input(
@@ -172,7 +172,7 @@ with selection_column:
             st.markdown("#### End Time")
             use_data_end = st.checkbox(
                 "Use end of data",
-                value=True,
+                value=False,
                 key="export_use_data_end",
             )
             end_date = st.date_input(
