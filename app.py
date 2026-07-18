@@ -129,14 +129,29 @@ st.markdown(
             color: var(--portal-button-text);
         }}
 
-        /* Streamlit select boxes and their open dropdown menus. */
-        [data-baseweb="select"] > div {{
+        /* Select boxes and multiselects. */
+        [data-testid="stSelectbox"] [data-baseweb="select"],
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+        [data-testid="stSelectbox"] [role="combobox"],
+        [data-testid="stMultiSelect"] [data-baseweb="select"],
+        [data-testid="stMultiSelect"] [data-baseweb="select"] > div {{
             background-color: var(--portal-dropdown-background) !important;
             color: var(--portal-dropdown-text) !important;
         }}
 
-        [data-baseweb="select"] span,
-        [data-baseweb="select"] input {{
+        [data-testid="stSelectbox"] span,
+        [data-testid="stSelectbox"] input,
+        [data-testid="stMultiSelect"] span,
+        [data-testid="stMultiSelect"] input {{
+            color: var(--portal-dropdown-text) !important;
+        }}
+
+        /* Frequency fields, including their minus and plus controls. */
+        [data-testid="stNumberInput"] [data-baseweb="input"],
+        [data-testid="stNumberInput"] [data-baseweb="input"] > div,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stNumberInput"] button {{
+            background-color: var(--portal-dropdown-background) !important;
             color: var(--portal-dropdown-text) !important;
         }}
 
