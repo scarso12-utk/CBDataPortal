@@ -31,6 +31,9 @@ SIDEBAR_COLOR = "#FFFDD0"
 BUTTON_COLOR = "#87CEEB"
 BUTTON_HOVER_COLOR = "#FFFAFA"
 BUTTON_TEXT_COLOR = "#000000"
+DROPDOWN_BACKGROUND_COLOR = "#FFFFFF"
+DROPDOWN_TEXT_COLOR = "#000000"
+DROPDOWN_OPTION_HOVER_COLOR = "#FFFDD0"
 GRAPH_BACKGROUND_COLOR = "#FFFFFF"
 GRAPH_GRID_COLOR = "#A9A9A9"
 ERROR_COLOR = "#B00020"
@@ -71,6 +74,9 @@ st.markdown(
             --portal-button: {BUTTON_COLOR};
             --portal-button-hover: {BUTTON_HOVER_COLOR};
             --portal-button-text: {BUTTON_TEXT_COLOR};
+            --portal-dropdown-background: {DROPDOWN_BACKGROUND_COLOR};
+            --portal-dropdown-text: {DROPDOWN_TEXT_COLOR};
+            --portal-dropdown-hover: {DROPDOWN_OPTION_HOVER_COLOR};
             --portal-text: {TEXT_COLOR};
             --portal-title: {TITLE_COLOR};
             --portal-error: {ERROR_COLOR};
@@ -121,6 +127,32 @@ st.markdown(
             background-color: var(--portal-button-hover);
             border-color: rgba(0, 0, 0, 0.55);
             color: var(--portal-button-text);
+        }}
+
+        /* Streamlit select boxes and their open dropdown menus. */
+        [data-baseweb="select"] > div {{
+            background-color: var(--portal-dropdown-background) !important;
+            color: var(--portal-dropdown-text) !important;
+        }}
+
+        [data-baseweb="select"] span,
+        [data-baseweb="select"] input {{
+            color: var(--portal-dropdown-text) !important;
+        }}
+
+        [data-baseweb="popover"] [role="listbox"] {{
+            background-color: var(--portal-dropdown-background) !important;
+        }}
+
+        [data-baseweb="popover"] [role="option"] {{
+            background-color: var(--portal-dropdown-background) !important;
+            color: var(--portal-dropdown-text) !important;
+        }}
+
+        [data-baseweb="popover"] [role="option"]:hover,
+        [data-baseweb="popover"] [role="option"][aria-selected="true"] {{
+            background-color: var(--portal-dropdown-hover) !important;
+            color: var(--portal-dropdown-text) !important;
         }}
 
         [data-testid="stMetric"],
