@@ -4,13 +4,11 @@ from __future__ import annotations
 # STANDARD LIBRARY IMPORTS
 # =============================================================================
 import hmac
-from io import BytesIO
 from pathlib import Path
 
 # =============================================================================
 # THIRD-PARTY IMPORTS
 # =============================================================================
-import boto3
 import streamlit as st
 
 # =============================================================================
@@ -43,8 +41,6 @@ SUCCESS_COLOR = "#176B2C"
 CARD_BORDER_COLOR = "rgba(0, 0, 0, 0.22)"
 TITLE_SIZE = "32px"
 LOGO_WIDTH = 700
-SIDEBAR_LOGO_WIDTH = 175
-SIDEBAR_LOGO_KEY = "CBDP.png"
 
 
 # =============================================================================
@@ -291,89 +287,6 @@ def render_login_screen() -> None:
 # =============================================================================
 if not st.session_state.get("portal_authenticated", False):
     render_login_screen()
-
-
-# =============================================================================
-# SIDEBAR LOGO
-# CBDP.png is loaded from the root of the same S3 bucket used by the portal.
-# =============================================================================
-def _get_secret_value(section: dict, *names: str) -> str | None:
-    """Return the first non-empty matching value from a secrets section."""
-    for name in names:
-        value = section.get(name)
-        if value:
-            return str(value)
-    return None
-
-
-@st.cache_data(show_spinner=False, ttl=3600)
-def load_sidebar_logo_from_s3() -> bytes | None:
-    """Download the sidebar logo from S3 and return its image bytes."""
-    try:
-        aws_secrets = dict(st.secrets.get("aws", {}))
-    except (FileNotFoundError, KeyError, TypeError):
-        return None
-
-    bucket_name = _get_secret_value(
-        aws_secrets,
-        "bucket_name",
-        "bucket",
-        "s3_bucket",
-        "S3_BUCKET_NAME",
-    )
-    region_name = _get_secret_value(
-        aws_secrets,
-        "region_name",
-        "region",
-        "aws_region",
-        "AWS_REGION",
-    )
-    access_key_id = _get_secret_value(
-        aws_secrets,
-        "aws_access_key_id",
-        "access_key_id",
-        "AWS_ACCESS_KEY_ID",
-    )
-    secret_access_key = _get_secret_value(
-        aws_secrets,
-        "aws_secret_access_key",
-        "secret_access_key",
-        "AWS_SECRET_ACCESS_KEY",
-    )
-
-    if not bucket_name:
-        return None
-
-    client_arguments: dict[str, str] = {}
-
-    if region_name:
-        client_arguments["region_name"] = region_name
-
-    if access_key_id and secret_access_key:
-        client_arguments["aws_access_key_id"] = access_key_id
-        client_arguments["aws_secret_access_key"] = secret_access_key
-
-    try:
-        s3_client = boto3.client("s3", **client_arguments)
-        response = s3_client.get_object(
-            Bucket=bucket_name,
-            Key=SIDEBAR_LOGO_KEY,
-        )
-        return response["Body"].read()
-    except Exception:
-        return None
-
-
-sidebar_logo = load_sidebar_logo_from_s3()
-
-if sidebar_logo:
-    with st.sidebar:
-        left_space, logo_column, right_space = st.columns([1, 6, 1])
-        with logo_column:
-            st.image(
-                BytesIO(sidebar_logo),
-                width=SIDEBAR_LOGO_WIDTH,
-            )
 
 
 # =============================================================================
