@@ -6,7 +6,6 @@ from analytics_tools.crash_events import render_crash_events
 from analytics_tools.frequency import render_frequency_analysis
 from data import database_ready
 
-
 # =============================================================================
 # ANALYTICS PAGE SETTINGS
 # =============================================================================
