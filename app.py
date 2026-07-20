@@ -27,6 +27,7 @@ SUCCESS_COLOR = "#176B2C"
 CARD_BORDER_COLOR = "rgba(0, 0, 0, 0.22)"
 TITLE_SIZE = "32px"
 LOGO_WIDTH = 700
+NORMAL_TEXT_SIZE = "17px"
 
 APP_DIRECTORY = Path(__file__).resolve().parent
 
@@ -51,9 +52,11 @@ st.markdown(
             --portal-error: {ERROR_COLOR}; --portal-success: {SUCCESS_COLOR};
             --portal-card-border: {CARD_BORDER_COLOR}; --portal-font: {FONT_FAMILY};
         }}
-        html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
-            font-family: var(--portal-font); color: var(--portal-text);
-        }}
+       html, body, [class*="css"], [data-testid="stAppViewContainer"] {
+    font-family: var(--portal-font);
+    color: var(--portal-text);
+    font-size: {NORMAL_TEXT_SIZE};
+}
         [data-testid="stAppViewContainer"] {{ background-color: var(--portal-background); }}
         [data-testid="stHeader"] {{ background-color: transparent; }}
         [data-testid="stSidebar"] > div:first-child {{ background-color: var(--portal-sidebar); }}
