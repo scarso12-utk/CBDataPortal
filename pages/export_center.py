@@ -40,6 +40,7 @@ TIME_RANGE_OPTIONS = [
     "Last Day",
     "Last Hour",
     "Last 10 Minutes",
+    "Range from Graphing Page",
     "Custom Range",
 ]
 
@@ -110,6 +111,14 @@ def resolve_selected_time_range(
         return data_end_unix - 60 * 60, data_end_unix
     if selected_range == "Last 10 Minutes":
         return data_end_unix - 10 * 60, data_end_unix
+    if selected_range == "Range from Graphing Page":
+        graph_start = st.session_state.get("graph_start_unix")
+        graph_end = st.session_state.get("graph_end_unix")
+        if graph_start is None or graph_end is None:
+            raise PortalDataError(
+                "No Graphing range is available yet. Generate a graph first."
+            )
+        return float(graph_start), float(graph_end)
 
     start_datetime = (
         data_start_datetime
@@ -189,6 +198,25 @@ with selection_column:
                 key="export_end_time",
             )
 
+        if selected_range == "Range from Graphing Page":
+            linked_start = st.session_state.get("graph_start_unix")
+            linked_end = st.session_state.get("graph_end_unix")
+            if linked_start is None or linked_end is None:
+                st.warning(
+                    "Generate a graph before using its time range in the Export Center."
+                )
+            else:
+                linked_start_text = datetime.fromtimestamp(
+                    float(linked_start), eastern_zone
+                ).strftime("%Y-%m-%d %I:%M:%S %p %Z")
+                linked_end_text = datetime.fromtimestamp(
+                    float(linked_end), eastern_zone
+                ).strftime("%Y-%m-%d %I:%M:%S %p %Z")
+                st.info(
+                    f"Using Graphing range: {linked_start_text} through "
+                    f"{linked_end_text}."
+                )
+
         st.markdown("#### Minimum Point Frequency")
         frequency_left, frequency_right = st.columns(2)
         with frequency_left:
@@ -242,6 +270,16 @@ fingerprint_document = {
     "frequency_minutes": int(frequency_minutes),
     "frequency_seconds": int(frequency_seconds),
     "selections": selections,
+    "linked_range_start": (
+        st.session_state.get("graph_start_unix")
+        if selected_range == "Range from Graphing Page"
+        else None
+    ),
+    "linked_range_end": (
+        st.session_state.get("graph_end_unix")
+        if selected_range == "Range from Graphing Page"
+        else None
+    ),
 }
 current_fingerprint = json.dumps(fingerprint_document, sort_keys=True)
 
