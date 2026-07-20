@@ -253,7 +253,11 @@ export_page = st.Page(
     title="Export Center",
     icon=":material/download:",
 )
-
+analytics_page = st.Page(
+    "pages/analytics.py",
+    title="Analytics",
+    icon=":material/analytics:",
+)
 about_page = st.Page(
     "pages/about.py",
     title="About",
