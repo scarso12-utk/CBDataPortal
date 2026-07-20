@@ -1,147 +1,190 @@
 from __future__ import annotations
 
 # =============================================================================
-# STANDARD LIBRARY IMPORTS
+# THIRD-PARTY IMPORTS
 # =============================================================================
-import pandas as pd
 import streamlit as st
-
-# =============================================================================
-# LOCAL APPLICATION IMPORTS
-# =============================================================================
-from data import (
-    PortalDataError,
-    database_ready,
-    format_unix_time,
-    get_database_summary,
-    get_metadata,
-    initialize_database,
-)
-
-
-PAGE_TITLE = "Composite Bridge Data Portal"
 
 
 # =============================================================================
 # PAGE HEADER
 # =============================================================================
-st.title(PAGE_TITLE)
+st.title("About")
+
 st.write(
-    "Load the latest acceleration, deflection, and environmental data from "
-    "Amazon S3 into DuckDB. After loading finishes, use the sidebar to graph "
-    "or export the data."
+    "The Composite Bridge Data Portal provides a centralized, password-protected "
+    "application for loading, visualizing, analyzing, and exporting long-term "
+    "monitoring data from the composite bridge in Morgan County, Tennessee."
 )
 
 
 # =============================================================================
-# DATA LOAD BUTTON
+# PROJECT OVERVIEW
 # =============================================================================
-if st.button("Load Data", type="primary", width="stretch"):
-    progress_bar = st.progress(0.0, text="Preparing data load...")
+st.subheader("Composite Bridge Research")
 
-    def update_progress(message: str, fraction: float) -> None:
-        """Update the Home page progress indicator during S3 and DuckDB work."""
-        progress_bar.progress(fraction, text=message)
+st.markdown(
+    """
+The bridge is monitored as part of ongoing research into the structural behavior
+and long-term performance of composite bridge systems. Sensors installed on the
+bridge record its response to traffic, vibration, temperature changes, humidity,
+and other environmental and loading conditions.
 
-    try:
-        with st.status("Loading Composite Bridge data...", expanded=True) as status:
-            status.write("Connecting to the private S3 bucket.")
-            metadata, database_rebuilt = initialize_database(update_progress)
-            status.write("Verifying the DuckDB tables and time ranges.")
-            status.update(
-                label="Composite Bridge data loaded successfully.",
-                state="complete",
-                expanded=False,
-            )
-
-        # Clear results created from an older database while retaining login state.
-        for key in list(st.session_state.keys()):
-            if key.startswith("graph_") or key.startswith("export_"):
-                del st.session_state[key]
-
-        st.session_state["home_last_load_rebuilt"] = database_rebuilt
-        st.success(
-            "The DuckDB database was rebuilt with the latest S3 data."
-            if database_rebuilt
-            else "The S3 files were unchanged, so the existing DuckDB database was reused."
-        )
-    except PortalDataError as exc:
-        progress_bar.empty()
-        st.error(str(exc))
-    except Exception as exc:
-        progress_bar.empty()
-        st.error(f"An unexpected data-loading error occurred: {exc}")
+The monitoring system has collected several years of time-stamped measurements.
+This portal makes those large datasets easier to access and use for research.
+"""
+)
 
 
 # =============================================================================
-# CURRENT DATABASE STATUS
+# BRIDGE INSTRUMENTATION
 # =============================================================================
-st.divider()
-st.subheader("Data Status")
+st.subheader("Bridge Instrumentation")
 
-if not database_ready():
-    st.warning("The bridge data has not been loaded on this server yet.")
-    st.info(
-        "The first load can take several minutes because the three large CSV "
-        "files must be downloaded and imported into DuckDB."
-    )
-else:
-    metadata = get_metadata()
-    summary = get_database_summary()
-    st.markdown("<span class='portal-success'>● DuckDB is ready</span>", unsafe_allow_html=True)
-    if summary.get("loaded_at"):
-        st.caption(f"Last successful load: {summary['loaded_at']}")
+st.markdown(
+    """
+The bridge monitoring system includes:
 
-    rows: list[dict[str, object]] = []
-    for item in metadata.values():
-        rows.append(
-            {
-                "Dataset": item.get("display_name", item.get("name", "Dataset")),
-                "Rows": int(item.get("row_count", 0)),
-                "First Reading": format_unix_time(float(item["start_unix"])),
-                "Latest Reading": format_unix_time(float(item["end_unix"])),
-            }
+- Two three-axis accelerometers for measuring forces and vibrations.
+- Two three-axis magnetometers used for vehicle-counting measurements.
+- Eight embedded digital temperature sensors.
+- One ambient humidity sensor.
+- One thermally isolated ambient temperature sensor.
+- One non-contact absolute deflection sensor for measuring bridge-deck movement.
+"""
+)
+
+
+# =============================================================================
+# AVAILABLE DATA
+# =============================================================================
+st.subheader("Available Data")
+
+acceleration_column, deflection_column, environmental_column = st.columns(3)
+
+with acceleration_column:
+    with st.container(border=True):
+        st.markdown("### Acceleration")
+
+        st.write(
+            "Acceleration data includes device identification, X-, Y-, and Z-axis "
+            "measurements, and calculated acceleration magnitude."
         )
 
-    status_frame = pd.DataFrame(rows)
-    st.dataframe(
-        status_frame,
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "Rows": st.column_config.NumberColumn(format="localized"),
-        },
-    )
+with deflection_column:
+    with st.container(border=True):
+        st.markdown("### Deflection")
 
-    graph_column, export_column = st.columns(2)
-    with graph_column:
-        st.page_link(
-            "pages/graphing.py",
-            label="Open Graphing Page",
-            icon=":material/show_chart:",
-            width="stretch",
+        st.write(
+            "Deflection data records small changes in the bridge deck's position "
+            "over time for structural-response analysis."
         )
-    with export_column:
-        st.page_link(
-            "pages/export_center.py",
-            label="Open Export Center",
-            icon=":material/download:",
-            width="stretch",
+
+with environmental_column:
+    with st.container(border=True):
+        st.markdown("### Environmental")
+
+        st.write(
+            "Environmental data includes eight embedded temperature readings, "
+            "ambient temperature, average temperature, humidity, and count data."
         )
-analytics_column, about_column = st.columns(2)
 
-with analytics_column:
-    st.page_link(
-        "pages/analytics.py",
-        label="Open Analytics Page",
-        icon=":material/analytics:",
-        width="stretch",
-    )
 
-with about_column:
-    st.page_link(
-        "pages/about.py",
-        label="Open About Page",
-        icon=":material/info:",
-        width="stretch",
-    )
+# =============================================================================
+# PORTAL FEATURES
+# =============================================================================
+st.subheader("Portal Features")
+
+st.markdown(
+    """
+1. **Home** securely retrieves the latest CSV files from the project's private
+   Amazon S3 bucket and loads them into a local DuckDB database.
+
+2. **Graphing** filters selected variables and creates an interactive Plotly
+   graph with zooming, panning, hovering, box selection, and selection statistics.
+
+3. **Export Center** filters selected variables and creates a CSV or Excel file
+   for the requested date and time range.
+
+4. **Analytics** provides access to specialized analytical workspaces for FFT
+   and frequency analysis and possible crash-event identification.
+
+5. **About** documents the bridge research, available data, portal features,
+   and data-handling process.
+"""
+)
+
+
+# =============================================================================
+# ANALYTICS
+# =============================================================================
+st.subheader("Analytics Workspaces")
+
+frequency_column, crash_column = st.columns(2)
+
+with frequency_column:
+    with st.container(border=True):
+        st.markdown("### FFT / Frequency Analysis")
+
+        st.write(
+            "This workspace is intended to analyze acceleration measurements in "
+            "the frequency domain and help identify dominant bridge-vibration "
+            "frequencies."
+        )
+
+with crash_column:
+    with st.container(border=True):
+        st.markdown("### Crash Events Identifier")
+
+        st.write(
+            "This workspace is intended to screen acceleration and deflection "
+            "data for unusual activity that could indicate a collision or other "
+            "significant impact event."
+        )
+
+st.caption(
+    "The analytical calculations and data-selection controls for these "
+    "workspaces are planned for a future update."
+)
+
+
+# =============================================================================
+# DATA HANDLING
+# =============================================================================
+st.subheader("Data Handling")
+
+st.markdown(
+    """
+- Source CSV files are stored in a private Amazon S3 bucket.
+- DuckDB is used to query the large datasets efficiently.
+- Filtering and frequency thinning occur before results enter application memory.
+- Unix timestamps are displayed in the **America/New_York** time zone.
+- Graph lines are broken when consecutive readings are separated by more than
+  ten minutes.
+- Excel exports are disabled when the filtered output exceeds Excel's worksheet
+  row limit.
+- Temporary exports are removed automatically after their retention period.
+- AWS credentials and the shared portal password are stored through Streamlit
+  Secrets rather than in the published Python source code.
+"""
+)
+
+
+# =============================================================================
+# ANALYTICS INTERPRETATION
+# =============================================================================
+st.warning(
+    "Events identified by future analytical tools should be treated as possible "
+    "events requiring additional review. A large sensor response does not by "
+    "itself confirm that a vehicle crash occurred."
+)
+
+
+# =============================================================================
+# RESEARCH CONTEXT
+# =============================================================================
+st.info(
+    "This portal supports the University of Tennessee composite bridge research "
+    "workflow and is intended to make the bridge-monitoring data easier to "
+    "access, visualize, analyze, and export."
+)
