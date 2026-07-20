@@ -1,0 +1,48 @@
+# =============================================================================
+# SECRETS AND LOCAL CONFIGURATION
+# Keep the example template tracked, but never commit real credentials.
+# =============================================================================
+.streamlit/secrets.toml
+secrets.toml
+.env
+.env.*
+!.env.example
+
+# =============================================================================
+# COMPOSITE BRIDGE DATA AND LOCAL DATABASES
+# Large source data is loaded from Amazon S3 and should not be stored in Git.
+# =============================================================================
+*.csv
+*.duckdb
+*.duckdb.wal
+*.wal
+
+# =============================================================================
+# GENERATED EXPORTS AND TEMPORARY DOWNLOADS
+# =============================================================================
+*.xlsx
+exports/
+*.download
+*.tmp
+
+# =============================================================================
+# PYTHON ENVIRONMENTS, CACHES, AND TOOL OUTPUT
+# =============================================================================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# =============================================================================
+# EDITOR AND OPERATING-SYSTEM FILES
+# =============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
