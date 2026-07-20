@@ -22,11 +22,11 @@ ANALYTICS_VIEWS = {
         ),
     },
     "crash_events": {
-        "title": "Crash Events Identifier",
-        "icon": ":material/warning:",
+        "title": "Vehicle Events Identifier",
+        "icon": ":material/directions_car:",
         "description": (
-            "Examine acceleration and deflection data for unusual activity that "
-            "could indicate a vehicle collision or other significant impact event."
+            "Identify high-confidence vehicle crossings by matching acceleration "
+            "bursts with increases in the environmental Count variable."
         ),
     },
 }
@@ -92,7 +92,7 @@ def render_analytics_overview() -> None:
         st.write(crash_view["description"])
 
         if st.button(
-            "Open Crash Events Identifier",
+            "Open Vehicle Events Identifier",
             icon=crash_view["icon"],
             width="stretch",
             key="analytics_open_crash_events",
