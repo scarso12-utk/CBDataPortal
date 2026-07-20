@@ -128,3 +128,20 @@ else:
             icon=":material/download:",
             width="stretch",
         )
+analytics_column, about_column = st.columns(2)
+
+with analytics_column:
+    st.page_link(
+        "pages/analytics.py",
+        label="Open Analytics Page",
+        icon=":material/analytics:",
+        width="stretch",
+    )
+
+with about_column:
+    st.page_link(
+        "pages/about.py",
+        label="Open About Page",
+        icon=":material/info:",
+        width="stretch",
+    )
