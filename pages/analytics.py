@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from analytics_tools.crash_events import render_crash_events
+from analytics_tools.frequency import render_frequency_analysis
 from data import database_ready
 
 
@@ -19,20 +21,12 @@ ANALYTICS_VIEWS = {
             "dominant vibration frequencies."
         ),
     },
-    "anomaly": {
-        "title": "Anomaly Detection",
-        "icon": ":material/troubleshoot:",
-        "description": (
-            "Find readings and time periods that differ substantially from the "
-            "bridge's typical behavior."
-        ),
-    },
-    "impact": {
-        "title": "Impact Event Identification",
+    "crash_events": {
+        "title": "Crash Events Identifier",
         "icon": ":material/warning:",
         "description": (
-            "Screen acceleration and deflection data for candidate impact events "
-            "that warrant closer review."
+            "Examine acceleration and deflection data for unusual activity that "
+            "could indicate a vehicle collision or other significant impact event."
         ),
     },
 }
@@ -41,56 +35,26 @@ ANALYTICS_VIEWS = {
 # =============================================================================
 # NAVIGATION FUNCTIONS
 # =============================================================================
-def open_view(view_name: str) -> None:
-    """Open one of the internal analytics views."""
+def open_analytics_view(view_name: str) -> None:
+    """Open one of the internal analytics tools."""
     st.session_state[ANALYTICS_VIEW_KEY] = view_name
 
 
 def return_to_analytics() -> None:
-    """Return to the main Analytics page."""
+    """Return to the main Analytics landing page."""
     st.session_state[ANALYTICS_VIEW_KEY] = "overview"
-
-
-# =============================================================================
-# INDIVIDUAL ANALYTICS VIEWS
-# =============================================================================
-def render_placeholder(view_name: str) -> None:
-    """Display a placeholder until the selected analysis is implemented."""
-    view = ANALYTICS_VIEWS[view_name]
-
-    if st.button(
-        "Back to Analytics",
-        icon=":material/arrow_back:",
-        key=f"analytics_back_{view_name}",
-    ):
-        return_to_analytics()
-        st.rerun()
-
-    st.title(view["title"])
-    st.write(view["description"])
-
-    if not database_ready():
-        st.warning(
-            "Bridge data has not been loaded on this server. Use the Home page "
-            "to load the data before running an analysis."
-        )
-
-    st.info(
-        "This analysis workspace has been added to the portal, but its analytical "
-        "controls and calculations have not been implemented yet."
-    )
 
 
 # =============================================================================
 # ANALYTICS LANDING PAGE
 # =============================================================================
-def render_overview() -> None:
-    """Display the Analytics landing page and its three available tools."""
+def render_analytics_overview() -> None:
+    """Display the Analytics landing page."""
     st.title("Analytics")
 
     st.write(
         "Choose an analytical workspace below. These specialized tools are "
-        "available only through this Analytics page."
+        "available only through the Analytics page."
     )
 
     if not database_ready():
@@ -100,29 +64,76 @@ def render_overview() -> None:
             "an analysis can run."
         )
 
-    for view_name, view in ANALYTICS_VIEWS.items():
-        with st.container(border=True):
-            st.subheader(view["title"])
-            st.write(view["description"])
+    # -------------------------------------------------------------------------
+    # FFT / FREQUENCY ANALYSIS
+    # -------------------------------------------------------------------------
+    frequency_view = ANALYTICS_VIEWS["frequency"]
 
-            if st.button(
-                f"Open {view['title']}",
-                icon=view["icon"],
-                width="stretch",
-                key=f"analytics_open_{view_name}",
-            ):
-                open_view(view_name)
-                st.rerun()
+    with st.container(border=True):
+        st.subheader(frequency_view["title"])
+        st.write(frequency_view["description"])
+
+        if st.button(
+            "Open FFT / Frequency Analysis",
+            icon=frequency_view["icon"],
+            width="stretch",
+            key="analytics_open_frequency",
+        ):
+            open_analytics_view("frequency")
+            st.rerun()
+
+    # -------------------------------------------------------------------------
+    # CRASH EVENTS IDENTIFIER
+    # -------------------------------------------------------------------------
+    crash_view = ANALYTICS_VIEWS["crash_events"]
+
+    with st.container(border=True):
+        st.subheader(crash_view["title"])
+        st.write(crash_view["description"])
+
+        if st.button(
+            "Open Crash Events Identifier",
+            icon=crash_view["icon"],
+            width="stretch",
+            key="analytics_open_crash_events",
+        ):
+            open_analytics_view("crash_events")
+            st.rerun()
+
+
+# =============================================================================
+# INDIVIDUAL ANALYTICS VIEWS
+# =============================================================================
+def render_selected_analytics_view(view_name: str) -> None:
+    """Display the selected analytics tool."""
+
+    if st.button(
+        "Back to Analytics",
+        icon=":material/arrow_back:",
+        key=f"analytics_back_{view_name}",
+    ):
+        return_to_analytics()
+        st.rerun()
+
+    if view_name == "frequency":
+        render_frequency_analysis()
+
+    elif view_name == "crash_events":
+        render_crash_events()
+
+    else:
+        return_to_analytics()
+        st.rerun()
 
 
 # =============================================================================
 # PAGE ROUTING
-# Only analytics.py is registered in app.py. These internal views therefore do
-# not appear as separate pages in the sidebar.
+# Only analytics.py is registered in app.py. The two analytical tools therefore
+# do not appear as separate pages in the sidebar.
 # =============================================================================
 current_view = st.session_state.get(ANALYTICS_VIEW_KEY, "overview")
 
 if current_view in ANALYTICS_VIEWS:
-    render_placeholder(current_view)
+    render_selected_analytics_view(current_view)
 else:
-    render_overview()
+    render_analytics_overview()
