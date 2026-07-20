@@ -52,11 +52,11 @@ st.markdown(
             --portal-error: {ERROR_COLOR}; --portal-success: {SUCCESS_COLOR};
             --portal-card-border: {CARD_BORDER_COLOR}; --portal-font: {FONT_FAMILY};
         }}
-       html, body, [class*="css"], [data-testid="stAppViewContainer"] {
-    font-family: var(--portal-font);
-    color: var(--portal-text);
-    font-size: {NORMAL_TEXT_SIZE};
-}
+        html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
+            font-family: var(--portal-font);
+            color: var(--portal-text);
+            font-size: {NORMAL_TEXT_SIZE};
+        }}
         [data-testid="stAppViewContainer"] {{ background-color: var(--portal-background); }}
         [data-testid="stHeader"] {{ background-color: transparent; }}
         [data-testid="stSidebar"] > div:first-child {{ background-color: var(--portal-sidebar); }}
