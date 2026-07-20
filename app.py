@@ -277,6 +277,7 @@ navigation = st.navigation(
         home_page,
         graphing_page,
         export_page,
+        analytics_page,
         about_page,
     ],
     position="sidebar",
