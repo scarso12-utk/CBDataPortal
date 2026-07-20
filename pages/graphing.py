@@ -43,6 +43,7 @@ TIME_RANGE_OPTIONS = [
     "Last Day",
     "Last Hour",
     "Last 10 Minutes",
+    "Range from Export Center",
     "Custom Range",
 ]
 
@@ -118,6 +119,15 @@ def resolve_selected_time_range(
         return data_end_unix - 60 * 60, data_end_unix
     if selected_range == "Last 10 Minutes":
         return data_end_unix - 10 * 60, data_end_unix
+    if selected_range == "Range from Export Center":
+        export_start = st.session_state.get("export_start_unix")
+        export_end = st.session_state.get("export_end_unix")
+        if export_start is None or export_end is None:
+            raise PortalDataError(
+                "No Export Center range is available yet. Open the Export Center "
+                "and calculate an export size first."
+            )
+        return float(export_start), float(export_end)
 
     start_datetime = (
         data_start_datetime
@@ -198,6 +208,26 @@ with control_column:
                 key="graph_end_time",
             )
 
+        if selected_range == "Range from Export Center":
+            linked_start = st.session_state.get("export_start_unix")
+            linked_end = st.session_state.get("export_end_unix")
+            if linked_start is None or linked_end is None:
+                st.warning(
+                    "Calculate an export size in the Export Center before using "
+                    "its time range here."
+                )
+            else:
+                linked_start_text = datetime.fromtimestamp(
+                    float(linked_start), eastern_zone
+                ).strftime("%Y-%m-%d %I:%M:%S %p %Z")
+                linked_end_text = datetime.fromtimestamp(
+                    float(linked_end), eastern_zone
+                ).strftime("%Y-%m-%d %I:%M:%S %p %Z")
+                st.info(
+                    f"Using Export Center range: {linked_start_text} through "
+                    f"{linked_end_text}."
+                )
+
         st.markdown("#### Minimum Point Frequency")
         frequency_left, frequency_right = st.columns(2)
         with frequency_left:
@@ -277,6 +307,8 @@ if generate_graph:
             )
 
         st.session_state["graph_data"] = graph_data
+        st.session_state["graph_start_unix"] = start_unix
+        st.session_state["graph_end_unix"] = end_unix
         st.session_state["graph_render_id"] = int(
             st.session_state.get("graph_render_id", 0)
         ) + 1
