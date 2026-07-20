@@ -43,6 +43,8 @@ TIME_RANGE_OPTIONS = [
     "Range from Graphing Page",
     "Custom Range",
 ]
+LAST_GRAPH_RANGE_KEY = "portal_last_graph_range"
+LAST_EXPORT_RANGE_KEY = "portal_last_export_range"
 
 
 # =============================================================================
@@ -76,6 +78,13 @@ data_start_unix, data_end_unix = overall_time_bounds(metadata)
 eastern_zone = ZoneInfo(TIME_ZONE)
 data_start_datetime = datetime.fromtimestamp(data_start_unix, eastern_zone)
 data_end_datetime = datetime.fromtimestamp(data_end_unix, eastern_zone)
+saved_export_range = st.session_state.get(LAST_EXPORT_RANGE_KEY, {})
+saved_export_start_datetime = datetime.fromtimestamp(
+    float(saved_export_range.get("start", data_start_unix)), eastern_zone
+)
+saved_export_end_datetime = datetime.fromtimestamp(
+    float(saved_export_range.get("end", data_end_unix)), eastern_zone
+)
 
 
 # =============================================================================
@@ -112,8 +121,9 @@ def resolve_selected_time_range(
     if selected_range == "Last 10 Minutes":
         return data_end_unix - 10 * 60, data_end_unix
     if selected_range == "Range from Graphing Page":
-        graph_start = st.session_state.get("graph_start_unix")
-        graph_end = st.session_state.get("graph_end_unix")
+        saved_graph_range = st.session_state.get(LAST_GRAPH_RANGE_KEY, {})
+        graph_start = saved_graph_range.get("start")
+        graph_end = saved_graph_range.get("end")
         if graph_start is None or graph_end is None:
             raise PortalDataError(
                 "No Graphing range is available yet. Generate a graph first."
@@ -146,16 +156,24 @@ with selection_column:
         selected_range = st.selectbox(
             "Time Range",
             TIME_RANGE_OPTIONS,
-            index=0,
+            index=(
+                TIME_RANGE_OPTIONS.index("Range from Graphing Page")
+                if st.session_state.get(LAST_GRAPH_RANGE_KEY)
+                else (
+                    TIME_RANGE_OPTIONS.index("Custom Range")
+                    if saved_export_range
+                    else 0
+                )
+            ),
             key="export_time_range",
         )
 
         use_data_start = True
         use_data_end = True
-        start_date = data_start_datetime.date()
-        start_time = data_start_datetime.time().replace(microsecond=0)
-        end_date = data_end_datetime.date()
-        end_time = data_end_datetime.time().replace(microsecond=0)
+        start_date = saved_export_start_datetime.date()
+        start_time = saved_export_start_datetime.time().replace(microsecond=0)
+        end_date = saved_export_end_datetime.date()
+        end_time = saved_export_end_datetime.time().replace(microsecond=0)
 
         if selected_range == "Custom Range":
             st.markdown("#### Start Time")
@@ -166,13 +184,13 @@ with selection_column:
             )
             start_date = st.date_input(
                 "Start Date",
-                value=data_start_datetime.date(),
+                value=saved_export_start_datetime.date(),
                 disabled=use_data_start,
                 key="export_start_date",
             )
             start_time = st.time_input(
                 "Start Time",
-                value=data_start_datetime.time().replace(microsecond=0),
+                value=saved_export_start_datetime.time().replace(microsecond=0),
                 step=60,
                 disabled=use_data_start,
                 key="export_start_time",
@@ -186,21 +204,22 @@ with selection_column:
             )
             end_date = st.date_input(
                 "End Date",
-                value=data_end_datetime.date(),
+                value=saved_export_end_datetime.date(),
                 disabled=use_data_end,
                 key="export_end_date",
             )
             end_time = st.time_input(
                 "End Time",
-                value=data_end_datetime.time().replace(microsecond=0),
+                value=saved_export_end_datetime.time().replace(microsecond=0),
                 step=60,
                 disabled=use_data_end,
                 key="export_end_time",
             )
 
         if selected_range == "Range from Graphing Page":
-            linked_start = st.session_state.get("graph_start_unix")
-            linked_end = st.session_state.get("graph_end_unix")
+            saved_graph_range = st.session_state.get(LAST_GRAPH_RANGE_KEY, {})
+            linked_start = saved_graph_range.get("start")
+            linked_end = saved_graph_range.get("end")
             if linked_start is None or linked_end is None:
                 st.warning(
                     "Generate a graph before using its time range in the Export Center."
@@ -271,12 +290,12 @@ fingerprint_document = {
     "frequency_seconds": int(frequency_seconds),
     "selections": selections,
     "linked_range_start": (
-        st.session_state.get("graph_start_unix")
+        st.session_state.get(LAST_GRAPH_RANGE_KEY, {}).get("start")
         if selected_range == "Range from Graphing Page"
         else None
     ),
     "linked_range_end": (
-        st.session_state.get("graph_end_unix")
+        st.session_state.get(LAST_GRAPH_RANGE_KEY, {}).get("end")
         if selected_range == "Range from Graphing Page"
         else None
     ),
@@ -341,6 +360,10 @@ if calculate_export:
         st.session_state["export_specs"] = selected_specs
         st.session_state["export_start_unix"] = start_unix
         st.session_state["export_end_unix"] = end_unix
+        st.session_state[LAST_EXPORT_RANGE_KEY] = {
+            "start": float(start_unix),
+            "end": float(end_unix),
+        }
         st.session_state["export_minimum_frequency"] = minimum_frequency
         st.session_state["export_row_count"] = export_row_count
         st.session_state.pop("export_file_path", None)
