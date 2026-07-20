@@ -247,9 +247,29 @@ def get_portal_password() -> str | None:
     return str(password) if password else None
 
 
+def hide_sidebar_before_login() -> None:
+    """Hide the empty sidebar and its expand control on the login screen."""
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"],
+            [data-testid="stSidebarCollapsedControl"] {
+                display: none !important;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_login_screen() -> None:
-    """Display the shared-password gate and stop unauthenticated sessions."""
-    st.markdown(f"<h1 style='text-align:center'>{PORTAL_TITLE}</h1>", unsafe_allow_html=True)
+    """Display the shared-password gate."""
+    hide_sidebar_before_login()
+
+    st.markdown(
+        f"<h1 style='text-align:center'>{PORTAL_TITLE}</h1>",
+        unsafe_allow_html=True,
+    )
     st.markdown(
         "<p style='text-align:center'>Enter the shared portal password to continue.</p>",
         unsafe_allow_html=True,
@@ -261,7 +281,7 @@ def render_login_screen() -> None:
             "The portal password has not been configured. Add [portal].password "
             "to Streamlit Secrets before using the application."
         )
-        st.stop()
+        return
 
     with st.form("portal_login_form", clear_on_submit=False):
         entered_password = st.text_input(
@@ -278,31 +298,72 @@ def render_login_screen() -> None:
         else:
             st.error("Incorrect password.")
 
+
+# =============================================================================
+# AUTHENTICATION STATE
+# =============================================================================
+if "portal_authenticated" not in st.session_state:
+    st.session_state["portal_authenticated"] = False
+
+
+# =============================================================================
+# PAGE DEFINITIONS
+# Protected pages are registered only after the password has been accepted.
+# =============================================================================
+login_page = st.Page(
+    render_login_screen,
+    title="Log In",
+    icon=":material/login:",
+    default=True,
+)
+
+home_page = st.Page(
+    "pages/home.py",
+    title="Home",
+    icon=":material/home:",
+    default=True,
+)
+
+graphing_page = st.Page(
+    "pages/graphing.py",
+    title="Graphing",
+    icon=":material/show_chart:",
+)
+
+export_page = st.Page(
+    "pages/export_center.py",
+    title="Export Center",
+    icon=":material/download:",
+)
+
+about_page = st.Page(
+    "pages/about.py",
+    title="About",
+    icon=":material/info:",
+)
+
+
+# =============================================================================
+# AUTHENTICATED NAVIGATION
+# st.navigation is called on every run. Before login, only the hidden login
+# page is registered, so the protected pages cannot be opened from the sidebar
+# or by entering their URLs directly.
+# =============================================================================
+if not st.session_state["portal_authenticated"]:
+    navigation = st.navigation(
+        [login_page],
+        position="hidden",
+    )
+    navigation.run()
     st.stop()
 
 
-# =============================================================================
-# AUTHENTICATION GATE
-# No navigation or data tools are rendered before this check succeeds.
-# =============================================================================
-if not st.session_state.get("portal_authenticated", False):
-    render_login_screen()
-
-
-# =============================================================================
-# MULTIPAGE NAVIGATION
-# Add another st.Page entry here when a new page is created later.
-# =============================================================================
 navigation = st.navigation(
     [
-        st.Page("pages/home.py", title="Home", icon=":material/home:", default=True),
-        st.Page("pages/graphing.py", title="Graphing", icon=":material/show_chart:"),
-        st.Page(
-            "pages/export_center.py",
-            title="Export Center",
-            icon=":material/download:",
-        ),
-        st.Page("pages/about.py", title="About", icon=":material/info:"),
+        home_page,
+        graphing_page,
+        export_page,
+        about_page,
     ],
     position="sidebar",
     expanded=True,
@@ -311,15 +372,23 @@ navigation = st.navigation(
 
 # =============================================================================
 # SHARED SIDEBAR STATUS AND LOGOUT CONTROLS
+# These controls are created only after authentication succeeds.
 # =============================================================================
 st.sidebar.divider()
+
 if database_ready():
     summary = get_database_summary()
-    st.sidebar.markdown("<span class='portal-success'>● Data loaded</span>", unsafe_allow_html=True)
+    st.sidebar.markdown(
+        "<span class='portal-success'>● Data loaded</span>",
+        unsafe_allow_html=True,
+    )
     if summary.get("loaded_at"):
         st.sidebar.caption(f"Last loaded: {summary['loaded_at']}")
 else:
-    st.sidebar.markdown("<span class='portal-error'>● Data not loaded</span>", unsafe_allow_html=True)
+    st.sidebar.markdown(
+        "<span class='portal-error'>● Data not loaded</span>",
+        unsafe_allow_html=True,
+    )
 
 if st.sidebar.button("Log Out", width="stretch"):
     st.session_state.clear()
@@ -327,6 +396,6 @@ if st.sidebar.button("Log Out", width="stretch"):
 
 
 # =============================================================================
-# RUN THE SELECTED PAGE
+# RUN THE SELECTED PROTECTED PAGE
 # =============================================================================
 navigation.run()
