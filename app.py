@@ -1,26 +1,12 @@
 from __future__ import annotations
 
-# =============================================================================
-# STANDARD LIBRARY IMPORTS
-# =============================================================================
 import hmac
 from pathlib import Path
 
-# =============================================================================
-# THIRD-PARTY IMPORTS
-# =============================================================================
 import streamlit as st
 
-# =============================================================================
-# LOCAL APPLICATION IMPORTS
-# =============================================================================
 from data import database_ready, get_database_summary
 
-
-# =============================================================================
-# APPEARANCE SETTINGS
-# Change the values in this section to update the entire portal.
-# =============================================================================
 PORTAL_TITLE = "Composite Bridge Data Portal"
 PAGE_ICON = "🌉"
 FONT_FAMILY = "Arial, sans-serif"
@@ -42,17 +28,8 @@ CARD_BORDER_COLOR = "rgba(0, 0, 0, 0.22)"
 TITLE_SIZE = "32px"
 LOGO_WIDTH = 700
 
-
-# =============================================================================
-# APPLICATION PATHS
-# =============================================================================
 APP_DIRECTORY = Path(__file__).resolve().parent
 
-
-# =============================================================================
-# STREAMLIT PAGE CONFIGURATION
-# This must be the first Streamlit command executed by the application.
-# =============================================================================
 st.set_page_config(
     page_title=PORTAL_TITLE,
     page_icon=PAGE_ICON,
@@ -60,67 +37,38 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-
-# =============================================================================
-# SHARED PORTAL STYLING
-# These styles are injected once and apply to every registered page.
-# =============================================================================
 st.markdown(
     f"""
     <style>
         :root {{
-            --portal-background: {BACKGROUND_COLOR};
-            --portal-sidebar: {SIDEBAR_COLOR};
-            --portal-button: {BUTTON_COLOR};
-            --portal-button-hover: {BUTTON_HOVER_COLOR};
+            --portal-background: {BACKGROUND_COLOR}; --portal-sidebar: {SIDEBAR_COLOR};
+            --portal-button: {BUTTON_COLOR}; --portal-button-hover: {BUTTON_HOVER_COLOR};
             --portal-button-text: {BUTTON_TEXT_COLOR};
             --portal-dropdown-background: {DROPDOWN_BACKGROUND_COLOR};
             --portal-dropdown-text: {DROPDOWN_TEXT_COLOR};
             --portal-dropdown-hover: {DROPDOWN_OPTION_HOVER_COLOR};
-            --portal-text: {TEXT_COLOR};
-            --portal-title: {TITLE_COLOR};
-            --portal-error: {ERROR_COLOR};
-            --portal-success: {SUCCESS_COLOR};
-            --portal-card-border: {CARD_BORDER_COLOR};
-            --portal-font: {FONT_FAMILY};
+            --portal-text: {TEXT_COLOR}; --portal-title: {TITLE_COLOR};
+            --portal-error: {ERROR_COLOR}; --portal-success: {SUCCESS_COLOR};
+            --portal-card-border: {CARD_BORDER_COLOR}; --portal-font: {FONT_FAMILY};
         }}
-
         html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
-            font-family: var(--portal-font);
-            color: var(--portal-text);
+            font-family: var(--portal-font); color: var(--portal-text);
         }}
-
-        [data-testid="stAppViewContainer"] {{
-            background-color: var(--portal-background);
-        }}
-
-        [data-testid="stHeader"] {{
-            background-color: transparent;
-        }}
-
-        [data-testid="stSidebar"] > div:first-child {{
-            background-color: var(--portal-sidebar);
-        }}
-
+        [data-testid="stAppViewContainer"] {{ background-color: var(--portal-background); }}
+        [data-testid="stHeader"] {{ background-color: transparent; }}
+        [data-testid="stSidebar"] > div:first-child {{ background-color: var(--portal-sidebar); }}
         h1, h2, h3, h4, h5, h6 {{
-            color: var(--portal-title);
-            font-family: var(--portal-font);
+            color: var(--portal-title); font-family: var(--portal-font);
         }}
-
-        h1 {{
-            font-size: {TITLE_SIZE};
-        }}
-
+        h1 {{ font-size: {TITLE_SIZE}; }}
         .stButton > button,
         .stDownloadButton > button,
         [data-testid="stFormSubmitButton"] > button {{
             background-color: var(--portal-button);
             border: 1px solid rgba(0, 0, 0, 0.35);
             color: var(--portal-button-text);
-            font-family: var(--portal-font);
-            font-weight: 600;
+            font-family: var(--portal-font); font-weight: 600;
         }}
-
         .stButton > button:hover:not(:disabled),
         .stDownloadButton > button:hover:not(:disabled),
         [data-testid="stFormSubmitButton"] > button:hover:not(:disabled) {{
@@ -128,102 +76,85 @@ st.markdown(
             border-color: rgba(0, 0, 0, 0.55);
             color: var(--portal-button-text);
         }}
-
-        /* Select boxes and multiselects. */
         [data-testid="stSelectbox"] [data-baseweb="select"],
         [data-testid="stSelectbox"] [data-baseweb="select"] > div,
         [data-testid="stSelectbox"] [role="combobox"],
         [data-testid="stMultiSelect"] [data-baseweb="select"],
-        [data-testid="stMultiSelect"] [data-baseweb="select"] > div {{
+        [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+        [data-testid="stNumberInput"] [data-baseweb="input"],
+        [data-testid="stNumberInput"] [data-baseweb="input"] > div,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stNumberInput"] button,
+        [data-testid="stDateInput"] [data-baseweb="input"],
+        [data-testid="stDateInput"] [data-baseweb="input"] > div,
+        [data-testid="stDateInput"] input,
+        [data-testid="stDateInput"] button,
+        [data-testid="stTimeInput"] [data-baseweb="input"],
+        [data-testid="stTimeInput"] [data-baseweb="input"] > div,
+        [data-testid="stTimeInput"] [data-baseweb="select"],
+        [data-testid="stTimeInput"] [data-baseweb="select"] > div,
+        [data-testid="stTimeInput"] [role="combobox"],
+        [data-testid="stTimeInput"] input,
+        [data-testid="stTimeInput"] button,
+        [data-baseweb="calendar"],
+        [data-baseweb="calendar"] > div,
+        [data-baseweb="calendar"] button {{
             background-color: var(--portal-dropdown-background) !important;
             color: var(--portal-dropdown-text) !important;
         }}
-
         [data-testid="stSelectbox"] span,
         [data-testid="stSelectbox"] input,
         [data-testid="stMultiSelect"] span,
         [data-testid="stMultiSelect"] input {{
             color: var(--portal-dropdown-text) !important;
         }}
-
-        /* Frequency fields, including their minus and plus controls. */
-        [data-testid="stNumberInput"] [data-baseweb="input"],
-        [data-testid="stNumberInput"] [data-baseweb="input"] > div,
-        [data-testid="stNumberInput"] input,
-        [data-testid="stNumberInput"] button {{
-            background-color: var(--portal-dropdown-background) !important;
+        [data-testid="stDateInput"] input::placeholder,
+        [data-testid="stTimeInput"] input::placeholder {{
+            color: var(--portal-dropdown-text) !important; opacity: 1 !important;
+        }}
+        [data-testid="stDateInput"] svg,
+        [data-testid="stTimeInput"] svg {{
+            fill: var(--portal-dropdown-text) !important;
             color: var(--portal-dropdown-text) !important;
         }}
-
         [data-baseweb="popover"] [role="listbox"] {{
             background-color: var(--portal-dropdown-background) !important;
         }}
-
         [data-baseweb="popover"] [role="option"] {{
             background-color: var(--portal-dropdown-background) !important;
             color: var(--portal-dropdown-text) !important;
         }}
-
         [data-baseweb="popover"] [role="option"]:hover,
         [data-baseweb="popover"] [role="option"][aria-selected="true"] {{
             background-color: var(--portal-dropdown-hover) !important;
             color: var(--portal-dropdown-text) !important;
         }}
-
         [data-testid="stMetric"],
         [data-testid="stVerticalBlockBorderWrapper"] {{
-            background-color: rgba(255, 255, 255, 0.34);
-            border-radius: 7px;
+            background-color: rgba(255, 255, 255, 0.34); border-radius: 7px;
         }}
-
         .portal-card {{
             background-color: rgba(255, 255, 255, 0.34);
-            border: 1px solid var(--portal-card-border);
-            border-radius: 7px;
-            padding: 1rem 1.1rem;
-            margin-bottom: 1rem;
+            border: 1px solid var(--portal-card-border); border-radius: 7px;
+            padding: 1rem 1.1rem; margin-bottom: 1rem;
         }}
-
-        .portal-success {{
-            color: var(--portal-success);
-            font-weight: 700;
-        }}
-
-        .portal-error {{
-            color: var(--portal-error);
-            font-weight: 700;
-        }}
-
-        /* The disabled Excel option becomes red when the row limit is exceeded. */
+        .portal-success {{ color: var(--portal-success); font-weight: 700; }}
+        .portal-error {{ color: var(--portal-error); font-weight: 700; }}
         .st-key-excel_format_disabled button {{
             background-color: #D9534F !important;
             border-color: #A52A2A !important;
-            color: #FFFFFF !important;
-            opacity: 1 !important;
+            color: #FFFFFF !important; opacity: 1 !important;
         }}
-
         .excel-limit-message {{
-            color: #B00020;
-            font-weight: 700;
-            margin-top: 0.25rem;
+            color: #B00020; font-weight: 700; margin-top: 0.25rem;
         }}
-
-        .logo-wrap {{
-            text-align: center;
-            margin: 0 auto 1rem auto;
-        }}
-
-        .small-note {{
-            font-size: 0.9rem;
-            opacity: 0.88;
-        }}
+        .logo-wrap {{ text-align: center; margin: 0 auto 1rem auto; }}
+        .small-note {{ font-size: 0.9rem; opacity: 0.88; }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Make graph-specific theme values available to page scripts while keeping all
-# user-editable appearance controls together near the top of this file.
 st.session_state["_portal_theme"] = {
     "graph_background": GRAPH_BACKGROUND_COLOR,
     "graph_grid": GRAPH_GRID_COLOR,
@@ -231,11 +162,6 @@ st.session_state["_portal_theme"] = {
     "logo_width": LOGO_WIDTH,
 }
 
-
-# =============================================================================
-# PASSWORD CONFIGURATION
-# The password is read from Streamlit Secrets and is never stored in this file.
-# =============================================================================
 def get_portal_password() -> str | None:
     """Return the shared portal password from Streamlit Secrets."""
     try:
@@ -245,7 +171,6 @@ def get_portal_password() -> str | None:
         password = None
 
     return str(password) if password else None
-
 
 def hide_sidebar_before_login() -> None:
     """Hide the empty sidebar and its expand control on the login screen."""
@@ -260,7 +185,6 @@ def hide_sidebar_before_login() -> None:
         """,
         unsafe_allow_html=True,
     )
-
 
 def render_login_screen() -> None:
     """Display the shared-password gate."""
@@ -298,18 +222,9 @@ def render_login_screen() -> None:
         else:
             st.error("Incorrect password.")
 
-
-# =============================================================================
-# AUTHENTICATION STATE
-# =============================================================================
 if "portal_authenticated" not in st.session_state:
     st.session_state["portal_authenticated"] = False
 
-
-# =============================================================================
-# PAGE DEFINITIONS
-# Protected pages are registered only after the password has been accepted.
-# =============================================================================
 login_page = st.Page(
     render_login_screen,
     title="Log In",
@@ -342,13 +257,6 @@ about_page = st.Page(
     icon=":material/info:",
 )
 
-
-# =============================================================================
-# AUTHENTICATED NAVIGATION
-# st.navigation is called on every run. Before login, only the hidden login
-# page is registered, so the protected pages cannot be opened from the sidebar
-# or by entering their URLs directly.
-# =============================================================================
 if not st.session_state["portal_authenticated"]:
     navigation = st.navigation(
         [login_page],
@@ -356,7 +264,6 @@ if not st.session_state["portal_authenticated"]:
     )
     navigation.run()
     st.stop()
-
 
 navigation = st.navigation(
     [
@@ -369,11 +276,6 @@ navigation = st.navigation(
     expanded=True,
 )
 
-
-# =============================================================================
-# SHARED SIDEBAR STATUS AND LOGOUT CONTROLS
-# These controls are created only after authentication succeeds.
-# =============================================================================
 st.sidebar.divider()
 
 if database_ready():
@@ -394,8 +296,4 @@ if st.sidebar.button("Log Out", width="stretch"):
     st.session_state.clear()
     st.rerun()
 
-
-# =============================================================================
-# RUN THE SELECTED PROTECTED PAGE
-# =============================================================================
 navigation.run()
