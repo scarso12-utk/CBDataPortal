@@ -247,7 +247,7 @@ with control_column:
                     f"{linked_end_text}."
                 )
 
-        st.markdown("#### Minimum Point Frequency")
+        st.markdown("#### Minimum Point Interval")
         frequency_left, frequency_right = st.columns(2)
         with frequency_left:
             frequency_minutes = st.number_input(
@@ -285,7 +285,7 @@ with control_column:
 
         st.caption(
             f"Graphs are limited to {MAX_GRAPH_POINTS:,} points for browser stability. "
-            "Increase the minimum frequency for long time ranges."
+            "Increase the minimum point interval for long time ranges."
         )
 
 
