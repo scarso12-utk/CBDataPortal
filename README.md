@@ -207,7 +207,8 @@ data until the shared password is entered.
 
 ## Export notes
 
-- Every export is one file.
+- Every export is one file named `Data-YYYY-MM-DD_HH-MM-SS.csv` or
+  `Data-YYYY-MM-DD_HH-MM-SS.xlsx` using the Eastern Time creation timestamp.
 - Variables from different datasets are combined by exact timestamp.
 - Presets include the saved time range from the Graphing page, and the latest
   calculated export range remains available while the user changes pages.
@@ -230,7 +231,8 @@ data until the shared password is entered.
   delay window. The default maximum delay is 45 seconds.
 - Excludes ambiguous windows containing more acceleration bursts than counted
   vehicles instead of guessing.
-- Displays summary metrics and allows confirmed events to be downloaded as CSV.
+- Displays summary metrics and downloads confirmed events as
+  `CrashEvents-START-DATE-END-DATE.csv`.
 - Results are high-confidence analytical estimates, not absolute physical proof.
 
 ### FFT / Frequency Analysis
