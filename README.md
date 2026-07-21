@@ -207,8 +207,8 @@ data until the shared password is entered.
 
 ## Export notes
 
-- Every export is one file named `Data-YYYY-MM-DD_HH-MM-SS_ET.csv` or
-  `Data-YYYY-MM-DD_HH-MM-SS_ET.xlsx` using the Eastern Time creation timestamp.
+- Every export is one file named `Data-YYYY-MM-DD_HH-MM-SS.csv` or
+  `Data-YYYY-MM-DD_HH-MM-SS.xlsx` using the creation timestamp.
 - Variables from different datasets are combined by exact timestamp.
 - Presets include the saved time range from the Graphing page, and the latest
   calculated export range remains available while the user changes pages.
@@ -232,7 +232,7 @@ data until the shared password is entered.
 - Excludes ambiguous windows containing more acceleration bursts than counted
   vehicles instead of guessing.
 - Displays summary metrics and downloads confirmed events as
-  `VehicleEvents-START-DATE_TIME_ET-to-END-DATE_TIME_ET.csv`.
+  `VehicleEvents-START-DATE_TIME-to-END-DATE_TIME.csv`.
 - Results are high-confidence analytical estimates, not absolute physical proof.
 
 ### FFT / Frequency Analysis
