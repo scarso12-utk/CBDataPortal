@@ -45,7 +45,7 @@ DEFAULT_S3_OBJECTS = {
 # =============================================================================
 TIME_ZONE = "America/New_York"
 EXCEL_MAX_DATA_ROWS = 1_048_575
-MAX_GRAPH_POINTS = 750_000
+MAX_GRAPH_POINTS = 300_000
 DUCKDB_MEMORY_LIMIT = "1700MB"
 DUCKDB_THREADS = 2
 EXPORT_RETENTION_SECONDS = 2 * 60 * 60
@@ -860,7 +860,7 @@ def query_graph_data(
 
                 if len(result) > remaining_points:
                     raise PortalDataError(
-                        f"The graph would contain more than {MAX_GRAPH_POINTS:,} points. "
+                        f"Plot exceeds the {MAX_GRAPH_POINTS:,} row limit. "
                         "Increase the minimum point frequency or shorten the time range."
                     )
 
