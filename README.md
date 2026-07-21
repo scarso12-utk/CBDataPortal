@@ -203,7 +203,7 @@ data until the shared password is entered.
 - The graph supports zoom, pan, hover, point selection, box selection, and
   lasso selection.
 - Selection statistics stay hidden until graph points are selected.
-- For browser stability, one graph is limited to 750,000 selected points.
+- For browser stability, one graph is limited to 300,000 plotted rows.
 
 ## Export notes
 
