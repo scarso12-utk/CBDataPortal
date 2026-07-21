@@ -1014,7 +1014,7 @@ def create_export_file(
 
     timestamp = datetime.now(ZoneInfo(TIME_ZONE)).strftime("%Y-%m-%d_%H-%M-%S")
     suffix = ".csv" if normalized_format == "csv" else ".xlsx"
-    output_path = EXPORT_DIRECTORY / f"Data-{timestamp}{suffix}"
+    output_path = EXPORT_DIRECTORY / f"Data-{timestamp}_ET{suffix}"
 
     with DATABASE_LOCK:
         connection = connect_duckdb()
