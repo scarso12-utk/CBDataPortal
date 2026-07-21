@@ -610,14 +610,14 @@ def render_crash_events() -> None:
     for column in ("Vehicle Event Time", "Acceleration End", "Count Update Time"):
         export_events[column] = export_events[column].astype(str)
 
-    range_start_date = datetime.fromtimestamp(
+    range_start_text = datetime.fromtimestamp(
         float(parameters.get("start", overlap_start)), eastern_zone
-    ).strftime("%Y-%m-%d")
-    range_end_date = datetime.fromtimestamp(
+    ).strftime("%Y-%m-%d_%H-%M-%S_ET")
+    range_end_text = datetime.fromtimestamp(
         float(parameters.get("end", overlap_end)), eastern_zone
-    ).strftime("%Y-%m-%d")
+    ).strftime("%Y-%m-%d_%H-%M-%S_ET")
     download_filename = (
-        f"CrashEvents-{range_start_date}-{range_end_date}.csv"
+        f"VehicleEvents-{range_start_text}-to-{range_end_text}.csv"
     )
 
     st.download_button(
