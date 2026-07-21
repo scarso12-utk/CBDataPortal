@@ -1,27 +1,42 @@
 # Composite Bridge Data Portal
 
-This folder contains the Streamlit version of the Composite Bridge Data Portal.
-It is organized as six Python scripts so the project stays simple while making
-future pages easy to add.
+This repository contains the Streamlit version of the Composite Bridge Data
+Portal. The application securely loads the latest bridge sensor data from
+Amazon S3 into DuckDB, then provides graphing, export, and analytical tools
+through a password-protected multipage interface.
 
 ## Portal pages
 
-- **Home** — downloads the latest private S3 files and loads them into DuckDB.
-- **Graphing** — reproduces the main GraphixCB filtering, Plotly, frequency,
-  time-range, box-selection, and statistics features.
-- **Export Center** — exports any selected variables as one CSV or one Excel file.
-- **About** — explains the research project, datasets, and portal workflow.
+- **Home** — checks Amazon S3 for updated files, downloads changed objects,
+  builds or reuses the local DuckDB database, and displays dataset status.
+- **Graphing** — creates interactive Plotly graphs with variable selection,
+  time-range presets, point-frequency thinning, gap handling, zoom, pan,
+  box/lasso selection, and selection statistics.
+- **Export Center** — combines selected variables by exact timestamp and exports
+  the chosen time range as one CSV or Excel file.
+- **Analytics** — provides specialized research tools:
+  - **Vehicle Events Identifier** matches acceleration bursts with later
+    increases in the environmental `Count` variable.
+  - **FFT / Frequency Analysis** has its workspace and documentation in place;
+    its data-selection and frequency-spectrum calculations are planned.
+- **About** — explains the bridge, instrumentation, datasets, architecture,
+  limitations, and intended research use.
 
 ## Project structure
 
 ```text
-DataPortal/
+CBDataPortal/
 ├── app.py
 ├── data.py
+├── analytics_tools/
+│   ├── __init__.py
+│   ├── crash_events.py
+│   └── frequency.py
 ├── pages/
 │   ├── home.py
 │   ├── graphing.py
 │   ├── export_center.py
+│   ├── analytics.py
 │   └── about.py
 ├── .streamlit/
 │   ├── config.toml
@@ -180,7 +195,9 @@ data until the shared password is entered.
 
 - Time controls use `America/New_York`.
 - Presets include Entire Dataset, Last Week, Last Day, Last Hour, Last 10
-  Minutes, and Custom Range.
+  Minutes, a saved range from the Export Center, and Custom Range.
+- The most recently generated graph range remains available while the user
+  moves between pages.
 - Minimum point frequency is applied in DuckDB before results enter memory.
 - Graph lines break when readings are separated by more than ten minutes.
 - The graph supports zoom, pan, hover, point selection, box selection, and
@@ -192,11 +209,36 @@ data until the shared password is entered.
 
 - Every export is one file.
 - Variables from different datasets are combined by exact timestamp.
+- Presets include the saved time range from the Graphing page, and the latest
+  calculated export range remains available while the user changes pages.
+- The portal calculates the exact combined row count before creating a file.
 - CSV remains available for outputs larger than an Excel worksheet.
 - Excel is disabled when the combined output exceeds 1,048,575 data rows,
   reserving one worksheet row for the column headings.
 - Excel files contain one worksheet named `Bridge Data`.
 - Prepared files are temporary and are cleaned from the server after two hours.
+
+## Analytics notes
+
+### Vehicle Events Identifier
+
+- Requires both acceleration and environmental data over an overlapping time range.
+- Groups nearby acceleration readings into bursts.
+- Treats positive changes in `Count` as vehicle detections and ignores counter
+  decreases as resets.
+- Confirms a burst only when a later Count increase occurs within the selected
+  delay window. The default maximum delay is 45 seconds.
+- Excludes ambiguous windows containing more acceleration bursts than counted
+  vehicles instead of guessing.
+- Displays summary metrics and allows confirmed events to be downloaded as CSV.
+- Results are high-confidence analytical estimates, not absolute physical proof.
+
+### FFT / Frequency Analysis
+
+The FFT workspace currently explains the planned analysis and checks whether
+bridge data is loaded. Axis selection, time-window controls, FFT calculations,
+frequency-spectrum graphs, dominant-frequency detection, comparisons, and
+result exports are planned for a future update.
 
 ## Changing colors and fonts
 
@@ -207,8 +249,8 @@ font, sizes, and logo width can be changed there without editing page logic.
 ## Adding another page later
 
 1. Add one new Python file inside `pages/`.
-2. Add one matching `st.Page(...)` entry to the **MULTIPAGE NAVIGATION** section
-   of `app.py`.
+2. Add one matching `st.Page(...)` entry in `app.py`.
+3. Add the page object to the authenticated `st.navigation(...)` list.
 
-No changes to the other page files are required unless the new page needs new
-shared data functions.
+No changes to the other page files are required unless the new page needs shared
+data functions from `data.py` or a specialized module in `analytics_tools/`.
