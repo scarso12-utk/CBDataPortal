@@ -612,7 +612,7 @@ def render_crash_events() -> None:
 
     range_start_text = datetime.fromtimestamp(
         float(parameters.get("start", overlap_start)), eastern_zone
-    ).strftime("%Y-%m-%d_%H-%M-%S_ET")
+    ).strftime("%Y-%m-%d_%H-%M-%S")
     range_end_text = datetime.fromtimestamp(
         float(parameters.get("end", overlap_end)), eastern_zone
     ).strftime("%Y-%m-%d_%H-%M-%S_ET")
