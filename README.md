@@ -71,7 +71,7 @@ local development and deployment.
 
 ## 2. Open the folder
 
-Open the `DataPortal` folder in Visual Studio Code or a terminal.
+Open the `CBDataPortal` folder in Visual Studio Code or a terminal.
 
 ## 3. Create a virtual environment
 
@@ -169,7 +169,7 @@ Do not use the AWS root account's access keys.
 ## Deploy to Streamlit Community Cloud
 
 1. Create a GitHub repository.
-2. Upload the contents of `DataPortal` to that repository.
+2. Upload the contents of `CBDataPortal` to that repository.
 3. Confirm that `.venv`, CSV files, DuckDB files, and `secrets.toml` are absent.
 4. In Streamlit Community Cloud, choose **Create app**.
 5. Select the GitHub repository, branch, and `app.py` entrypoint.
