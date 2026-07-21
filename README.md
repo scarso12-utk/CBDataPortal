@@ -198,7 +198,7 @@ data until the shared password is entered.
   Minutes, a saved range from the Export Center, and Custom Range.
 - The most recently generated graph range remains available while the user
   moves between pages.
-- Minimum point frequency is applied in DuckDB before results enter memory.
+- Minimum point interval is applied in DuckDB before results enter memory.
 - Graph lines break when readings are separated by more than ten minutes.
 - The graph supports zoom, pan, hover, point selection, box selection, and
   lasso selection.
