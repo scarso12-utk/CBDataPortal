@@ -36,9 +36,9 @@ from data import (
 # 80 measurements over 3.5 seconds in each burst.
 DEFAULT_BURST_GAP_SECONDS = 1.0
 
-# A Count increase may be written after the acceleration burst. In the sample
-# data, one clear match had a delay of approximately 29 seconds from burst start
-# to Count update. Forty-five seconds allows roughly two environmental samples.
+# A Count increase may be written after the acceleration burst has ended.
+# Forty-five seconds allows for the delayed Count update while keeping the
+# association close enough to the preceding acceleration event.
 DEFAULT_MAX_EVENT_DELAY_SECONDS = 45
 
 TIME_RANGE_OPTIONS = [
@@ -298,11 +298,12 @@ def match_confirmed_events(
     bursts: pd.DataFrame,
     max_delay_seconds: float,
 ) -> pd.DataFrame:
-    """Match Count increases to preceding acceleration bursts conservatively.
+    """Match Count increases to completed acceleration bursts conservatively.
 
+    The lookback window and reported delay are measured from each burst's end.
     A burst is confirmed only when the Count increase can accommodate every
-    unmatched burst in the lookback window. For example, one Count increase and
-    two candidate bursts is ambiguous, so neither burst is reported as confirmed.
+    unmatched burst in that window. For example, one Count increase and two
+    candidate bursts is ambiguous, so neither is reported as confirmed.
     """
     if count_changes.empty or bursts.empty:
         return pd.DataFrame(columns=RESULT_COLUMNS)
@@ -318,8 +319,8 @@ def match_confirmed_events(
 
         candidates = available[
             (~available["matched"])
-            & (available["burst_start"] >= earliest_time)
-            & (available["burst_start"] <= count_time)
+            & (available["burst_end"] >= earliest_time)
+            & (available["burst_end"] <= count_time)
         ]
 
         # More acceleration bursts than counted vehicles makes the association
@@ -336,7 +337,7 @@ def match_confirmed_events(
                     "Count Update Time": count_time,
                     "Count Increase": increase,
                     "Delay (seconds)": round(
-                        count_time - float(burst["burst_start"]), 3
+                        count_time - float(burst["burst_end"]), 3
                     ),
                     "Acceleration Samples": int(burst["sample_count"]),
                     "Maximum Magnitude": burst["maximum_magnitude"],
@@ -498,9 +499,9 @@ def render_crash_events() -> None:
             )
         with explanation_column:
             st.info(
-                "The default 45-second window allows for the delay between an "
-                "acceleration burst and the later Count update. Only preceding "
-                "acceleration—not acceleration after the Count update—qualifies."
+                "The default 45-second window measures the delay from the end "
+                "of an acceleration burst to the later Count update. A burst "
+                "must end before the Count update to qualify."
             )
 
         run_identification = st.button(
@@ -557,7 +558,7 @@ def render_crash_events() -> None:
                 - Positive changes in `Count` are treated as vehicle detections.
                 - Decreases in `Count` are treated as counter resets and ignored.
                 - A burst is confirmed only when a later Count increase occurs
-                  within the selected delay window.
+                  within the selected delay window after the burst ends.
                 - Ambiguous windows containing more bursts than counted vehicles
                   are excluded instead of guessed.
                 """
@@ -620,7 +621,8 @@ def render_crash_events() -> None:
 
     st.caption(
         "Results use a one-directional matching window of "
-        f"{int(parameters.get('delay', DEFAULT_MAX_EVENT_DELAY_SECONDS))} seconds. "
+        f"{int(parameters.get('delay', DEFAULT_MAX_EVENT_DELAY_SECONDS))} seconds "
+        "measured from acceleration-burst end to Count update. "
         "Dual-sensor agreement provides strong evidence of a vehicle crossing, "
         "but it should not be interpreted as absolute physical proof."
     )
