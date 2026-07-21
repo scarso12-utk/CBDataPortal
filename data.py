@@ -861,7 +861,7 @@ def query_graph_data(
                 if len(result) > remaining_points:
                     raise PortalDataError(
                         f"Plot exceeds the {MAX_GRAPH_POINTS:,} row limit. "
-                        "Increase the minimum point frequency or shorten the time range."
+                        "Increase the minimum point interval or shorten the time range."
                     )
 
                 remaining_points -= len(result)
