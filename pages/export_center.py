@@ -236,7 +236,7 @@ with selection_column:
                     f"{linked_end_text}."
                 )
 
-        st.markdown("#### Minimum Point Frequency")
+        st.markdown("#### Minimum Point Interval")
         frequency_left, frequency_right = st.columns(2)
         with frequency_left:
             frequency_minutes = st.number_input(
