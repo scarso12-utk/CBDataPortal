@@ -615,7 +615,7 @@ def render_crash_events() -> None:
     ).strftime("%Y-%m-%d_%H-%M-%S")
     range_end_text = datetime.fromtimestamp(
         float(parameters.get("end", overlap_end)), eastern_zone
-    ).strftime("%Y-%m-%d_%H-%M-%S_ET")
+    ).strftime("%Y-%m-%d_%H-%M-%S")
     download_filename = (
         f"VehicleEvents-{range_start_text}-to-{range_end_text}.csv"
     )
