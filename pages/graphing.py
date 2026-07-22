@@ -48,6 +48,61 @@ TIME_RANGE_OPTIONS = [
 ]
 LAST_GRAPH_RANGE_KEY = "portal_last_graph_range"
 LAST_EXPORT_RANGE_KEY = "portal_last_export_range"
+SERIES_COLORS = (
+    "#636EFA",
+    "#EF553B",
+    "#00CC96",
+    "#AB63FA",
+    "#FFA15A",
+    "#19D3F3",
+    "#FF6692",
+    "#B6E880",
+    "#FF97FF",
+    "#FECB52",
+    "#2E91E5",
+    "#E15F99",
+    "#1CA71C",
+    "#FB0D0D",
+    "#DA16FF",
+    "#222A2A",
+    "#B68100",
+    "#750D86",
+    "#EB663B",
+    "#511CFB",
+    "#00A08B",
+    "#FB00D1",
+    "#6C7C32",
+    "#AF0038",
+)
+AXIS_TITLES = {
+    "Deflection": "Deflection (mm)",
+    "Temp0": "Temperature Sensor 0 (°C)",
+    "Temp1": "Temperature Sensor 1 (°C)",
+    "Temp2": "Temperature Sensor 2 (°C)",
+    "Temp3": "Temperature Sensor 3 (°C)",
+    "Temp4": "Temperature Sensor 4 (°C)",
+    "Temp5": "Temperature Sensor 5 (°C)",
+    "Temp6": "Temperature Sensor 6 (°C)",
+    "Temp7": "Temperature Sensor 7 (°C)",
+    "Temperature": "Ambient Temperature Sensor (°C)",
+    "Average Temp": "Average Temperature (°C)",
+    "Humidity": "Humidity (%)",
+    "Count": "Vehicle Count",
+}
+
+
+def axis_title_for_spec(spec: dict[str, object]) -> str:
+    """Return the requested unit-bearing y-axis title for one graph series."""
+    variable = str(spec.get("variable", "Value"))
+    series_label = str(spec.get("series_label", variable))
+
+    if str(spec.get("dataset", "")) == "accell":
+        device_number = 1 if "Device 1" in series_label else 2
+        if variable == "Magnitude":
+            return f"Device {device_number} Acceleration Magnitude (mm/s2)"
+        return f"Device {device_number} {variable} Acceleration (mm/s2)"
+
+    return AXIS_TITLES.get(variable, series_label)
 
 
 # =============================================================================
@@ -325,7 +380,18 @@ if generate_graph:
                 "The selected variables contain no usable data in this time range."
             )
 
+        graphed_series = set(graph_data["Series"].astype(str).unique())
+        graph_series_info = [
+            {
+                "series_name": str(spec["series_label"]),
+                "axis_title": axis_title_for_spec(spec),
+            }
+            for spec in selected_specs
+            if str(spec["series_label"]) in graphed_series
+        ]
+
         st.session_state["graph_data"] = graph_data
+        st.session_state["graph_series_info"] = graph_series_info
         st.session_state["graph_start_unix"] = start_unix
         st.session_state["graph_end_unix"] = end_unix
         st.session_state[LAST_GRAPH_RANGE_KEY] = {
@@ -340,9 +406,11 @@ if generate_graph:
         )
     except PortalDataError as exc:
         st.session_state.pop("graph_data", None)
+        st.session_state.pop("graph_series_info", None)
         st.error(str(exc))
     except Exception as exc:
         st.session_state.pop("graph_data", None)
+        st.session_state.pop("graph_series_info", None)
         st.error(f"The graph could not be generated: {exc}")
 
 
@@ -363,8 +431,102 @@ with graph_column:
         st.caption(st.session_state.get("graph_description", ""))
         figure = go.Figure()
 
-        for series_name, series_data in graph_data.groupby("Series", sort=False):
-            series_data = series_data.sort_values("DateTime")
+        available_series = list(graph_data["Series"].astype(str).unique())
+        stored_series_info = st.session_state.get("graph_series_info", [])
+        graph_series_info = [
+            {
+                "series_name": str(item.get("series_name", "")),
+                "axis_title": str(item.get("axis_title", item.get("series_name", ""))),
+            }
+            for item in stored_series_info
+            if isinstance(item, dict)
+            and str(item.get("series_name", "")) in available_series
+        ]
+        configured_names = {item["series_name"] for item in graph_series_info}
+        graph_series_info.extend(
+            {
+                "series_name": series_name,
+                "axis_title": series_name,
+            }
+            for series_name in available_series
+            if series_name not in configured_names
+        )
+
+        render_id = int(st.session_state.get("graph_render_id", 0))
+        axis_checkbox_keys = {
+            item["series_name"]: f"graph_axis_{render_id}_{index}"
+            for index, item in enumerate(graph_series_info)
+        }
+        enabled_axis_info = [
+            item
+            for item in graph_series_info
+            if bool(
+                st.session_state.get(axis_checkbox_keys[item["series_name"]], False)
+            )
+        ]
+
+        series_colors = {
+            item["series_name"]: SERIES_COLORS[index % len(SERIES_COLORS)]
+            for index, item in enumerate(graph_series_info)
+        }
+        series_axis_references = {
+            item["series_name"]: "y" for item in graph_series_info
+        }
+
+        if enabled_axis_info:
+            axis_layout: dict[str, dict[str, object]] = {
+                "yaxis": {
+                    "visible": False,
+                    "showgrid": False,
+                    "zeroline": False,
+                }
+            }
+            for enabled_index, item in enumerate(enabled_axis_info):
+                axis_number = enabled_index + 2
+                axis_name = f"yaxis{axis_number}"
+                axis_reference = f"y{axis_number}"
+                axis_color = series_colors[item["series_name"]]
+                is_left_axis = enabled_index == 0
+
+                series_axis_references[item["series_name"]] = axis_reference
+                axis_settings: dict[str, object] = {
+                    "title": {
+                        "text": item["axis_title"],
+                        "font": {"color": axis_color},
+                    },
+                    "tickfont": {"color": axis_color},
+                    "linecolor": axis_color,
+                    "tickcolor": axis_color,
+                    "showline": True,
+                    "linewidth": 2,
+                    "ticks": "outside",
+                    "overlaying": "y",
+                    "anchor": "free",
+                    "side": "left" if is_left_axis else "right",
+                    "position": 0.0 if is_left_axis else 1.0,
+                    "showgrid": is_left_axis,
+                    "gridcolor": graph_grid,
+                    "zeroline": False,
+                    "automargin": True,
+                }
+                if not is_left_axis:
+                    axis_settings["autoshift"] = True
+                axis_layout[axis_name] = axis_settings
+        else:
+            axis_layout = {
+                "yaxis": {
+                    "title": "Value",
+                    "gridcolor": graph_grid,
+                    "automargin": True,
+                }
+            }
+
+        series_text = graph_data["Series"].astype(str)
+        for item in graph_series_info:
+            series_name = item["series_name"]
+            series_data = graph_data.loc[series_text == series_name].sort_values(
+                "DateTime"
+            )
             x_values: list[object] = []
             y_values: list[object] = []
             custom_values: list[list[str] | None] = []
@@ -392,9 +554,10 @@ with graph_column:
                     y=y_values,
                     customdata=custom_values,
                     name=str(series_name),
+                    yaxis=series_axis_references[series_name],
                     mode="lines+markers",
-                    line={"width": 2},
-                    marker={"size": 4},
+                    line={"width": 2, "color": series_colors[series_name]},
+                    marker={"size": 4, "color": series_colors[series_name]},
                     connectgaps=False,
                     hovertemplate=(
                         "Time: %{x}<br>"
@@ -409,14 +572,19 @@ with graph_column:
             title="Selected Bridge Data",
             height=GRAPH_HEIGHT,
             xaxis={"title": "Time", "gridcolor": graph_grid},
-            yaxis={"title": "Value", "gridcolor": graph_grid},
             plot_bgcolor=graph_background,
             paper_bgcolor=graph_background,
             dragmode="zoom",
             legend={"title": {"text": "Data"}},
-            margin={"l": 60, "r": 30, "t": 60, "b": 60},
+            margin={
+                "l": 80,
+                "r": min(500, 60 + max(0, len(enabled_axis_info) - 1) * 45),
+                "t": 60,
+                "b": 60,
+            },
             hovermode="closest",
             font={"family": graph_font},
+            **axis_layout,
         )
 
         graph_event = st.plotly_chart(
@@ -432,6 +600,18 @@ with graph_column:
                 "responsive": True,
             },
         )
+
+        st.markdown("#### Y-Axes")
+        st.caption(
+            "Select the variables that should have their own color-coded y-axis. "
+            "Data lines remain visible when an axis is unchecked."
+        )
+        for item in graph_series_info:
+            st.checkbox(
+                item["axis_title"],
+                value=False,
+                key=axis_checkbox_keys[item["series_name"]],
+            )
 
         # =====================================================================
         # BOX AND LASSO SELECTION STATISTICS
