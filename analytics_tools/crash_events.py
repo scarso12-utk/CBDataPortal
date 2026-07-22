@@ -36,9 +36,9 @@ from data import (
 # 80 measurements over 3.5 seconds in each burst.
 DEFAULT_BURST_GAP_SECONDS = 1.0
 
-# A Count increase may be written after the acceleration burst has ended.
-# Forty-five seconds allows for the delayed Count update while keeping the
-# association close enough to the preceding acceleration event.
+# Maximum Count Delay is measured from the start of an acceleration burst to
+# the Count update. A Count increase during the burst therefore still qualifies
+# when it occurs within this window.
 DEFAULT_MAX_EVENT_DELAY_SECONDS = 45
 
 TIME_RANGE_OPTIONS = [
@@ -51,7 +51,6 @@ TIME_RANGE_OPTIONS = [
 
 RESULT_COLUMNS = [
     "Vehicle Event Time",
-    "Acceleration End",
     "Count Update Time",
     "Count Increase",
     "Delay (seconds)",
@@ -300,7 +299,7 @@ def match_confirmed_events(
 ) -> pd.DataFrame:
     """Match Count increases to completed acceleration bursts conservatively.
 
-    The lookback window and reported delay are measured from each burst's end.
+    The lookback window and reported delay are measured from each burst's start.
     A burst is confirmed only when the Count increase can accommodate every
     unmatched burst in that window. For example, one Count increase and two
     candidate bursts is ambiguous, so neither is reported as confirmed.
@@ -319,8 +318,8 @@ def match_confirmed_events(
 
         candidates = available[
             (~available["matched"])
-            & (available["burst_end"] >= earliest_time)
-            & (available["burst_end"] <= count_time)
+            & (available["burst_start"] >= earliest_time)
+            & (available["burst_start"] <= count_time)
         ]
 
         # More acceleration bursts than counted vehicles makes the association
@@ -333,11 +332,10 @@ def match_confirmed_events(
             matched_rows.append(
                 {
                     "Vehicle Event Time": float(burst["burst_start"]),
-                    "Acceleration End": float(burst["burst_end"]),
                     "Count Update Time": count_time,
                     "Count Increase": increase,
                     "Delay (seconds)": round(
-                        count_time - float(burst["burst_end"]), 3
+                        count_time - float(burst["burst_start"]), 3
                     ),
                     "Acceleration Samples": int(burst["sample_count"]),
                     "Maximum Magnitude": burst["maximum_magnitude"],
@@ -404,7 +402,7 @@ def identify_vehicle_events(
 def format_event_times(events: pd.DataFrame) -> pd.DataFrame:
     """Convert Unix event timestamps to readable Eastern Time values."""
     formatted = events.copy()
-    for column in ("Vehicle Event Time", "Acceleration End", "Count Update Time"):
+    for column in ("Vehicle Event Time", "Count Update Time"):
         formatted[column] = pd.to_datetime(
             formatted[column], unit="s", utc=True
         ).dt.tz_convert(TIME_ZONE)
@@ -499,9 +497,9 @@ def render_crash_events() -> None:
             )
         with explanation_column:
             st.info(
-                "The default 45-second window measures the delay from the end "
-                "of an acceleration burst to the later Count update. A burst "
-                "must end before the Count update to qualify."
+                "The default 45-second window measures the delay from the start "
+                "of an acceleration burst to the Count update. A Count increase "
+                "during the burst qualifies when it occurs within this window."
             )
 
         run_identification = st.button(
@@ -557,8 +555,8 @@ def render_crash_events() -> None:
                 - Acceleration readings are grouped into distinct bursts.
                 - Positive changes in `Count` are treated as vehicle detections.
                 - Decreases in `Count` are treated as counter resets and ignored.
-                - A burst is confirmed only when a later Count increase occurs
-                  within the selected delay window after the burst ends.
+                - A burst is confirmed only when a Count increase occurs
+                  within the selected delay window after the burst starts.
                 - Ambiguous windows containing more bursts than counted vehicles
                   are excluded instead of guessed.
                 """
@@ -593,9 +591,6 @@ def render_crash_events() -> None:
             "Vehicle Event Time": st.column_config.DatetimeColumn(
                 "Vehicle Event Time", format="YYYY-MM-DD hh:mm:ss.SSS a"
             ),
-            "Acceleration End": st.column_config.DatetimeColumn(
-                "Acceleration End", format="YYYY-MM-DD hh:mm:ss.SSS a"
-            ),
             "Count Update Time": st.column_config.DatetimeColumn(
                 "Count Update Time", format="YYYY-MM-DD hh:mm:ss.SSS a"
             ),
@@ -607,7 +602,7 @@ def render_crash_events() -> None:
     )
 
     export_events = display_events.copy()
-    for column in ("Vehicle Event Time", "Acceleration End", "Count Update Time"):
+    for column in ("Vehicle Event Time", "Count Update Time"):
         export_events[column] = export_events[column].astype(str)
 
     range_start_text = datetime.fromtimestamp(
@@ -632,7 +627,7 @@ def render_crash_events() -> None:
     st.caption(
         "Results use a one-directional matching window of "
         f"{int(parameters.get('delay', DEFAULT_MAX_EVENT_DELAY_SECONDS))} seconds "
-        "measured from acceleration-burst end to Count update. "
+        "measured from acceleration-burst start to Count update. "
         "Dual-sensor agreement provides strong evidence of a vehicle crossing, "
         "but it should not be interpreted as absolute physical proof."
     )
