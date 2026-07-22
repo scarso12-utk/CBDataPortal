@@ -258,6 +258,11 @@ analytics_page = st.Page(
     title="Analytics",
     icon=":material/analytics:",
 )
+ai_page = st.Page(
+    "pages/composite_bridge_data_ai.py",
+    title="Composite Bridge Data AI",
+    icon=":material/smart_toy:",
+)
 about_page = st.Page(
     "pages/about.py",
     title="About",
@@ -278,6 +283,7 @@ navigation = st.navigation(
         graphing_page,
         export_page,
         analytics_page,
+        ai_page,
         about_page,
     ],
     position="sidebar",
